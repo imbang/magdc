@@ -1,7 +1,7 @@
 import sqlite3 as lite
 import sys
 import os
-##import MySQLdb as mdb
+import MySQLdb as mdb
 
 class MagDB:
 
@@ -41,7 +41,17 @@ class MagclDB(MagDB):
 
 class MagsrvDB(MagDB):
     def __init__(self):
-        pass
+        HOST = 'localhost'
+        USER = 'magsrv'
+        PORT = 3306
+        PASS = ''
+        DB = 'magdcdb'
+        try:
+            self.conn = mdb.connect(host=HOST,user=USER,port=PORT,passwd=PASS,db=DB)
+            sys.stderr.write("Database accessed !\n\n")
+        except MySQLdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            sys.exit(1)
 
     def close(self):
         self.conn.close()
