@@ -22,9 +22,7 @@ class FileTransferProtocol(basic.LineReceiver):
                 self.staid = None
                 self.isLogin = False
 
-##                self.setLineMode()
 		self.transport.write('Welcome to MAGNETICS DATA CENTER(v1.0)\n')
-##		self.transport.write('Type help for list of all the available commands\n')
 		self.transport.write('auth\n')
 		
 		display_message('Connection from: %s (%d clients total)' % (self.host, len(self.factory.clients)))
@@ -47,53 +45,24 @@ class FileTransferProtocol(basic.LineReceiver):
 		if not command in COMMANDS:
                         self.transport.write('%s\n' % (command))
 			self.transport.write('Invalid command\n')
-##			self.transport.write('ENDMSG\n')
 			return
 		    
 		if command == 'list':
-			self._send_list_of_files() ### list 10 days status
+                        pass
+
 		elif command == 'auth':
-                        #if self.isLogin:
                         self.isLogin = self.getAuth()
                         if self.isLogin:
                                 self.transport.write('file\n')
                                 
-                        #self.transport.write('auth\n')
-                        #self.transport.write('ENDMSG\n')
                         return
-##		elif command == 'get':
-##			try:
-##				filename = data[1]
-##			except IndexError:
-##				self.transport.write('Missing filename\n')
-##				self.transport.write('ENDMSG\n')
-##				return
-##			
-##			if not self.factory.files:
-##				self.factory.files = self._get_file_list()
-##				
-##			if not filename in self.factory.files:
-##				self.transport.write('File with filename %s does not exist\n' % (filename))
-##				self.transport.write('ENDMSG\n')
-##				return
-##			
-##			display_message('Sending file: %s (%d KB)' % (filename, self.factory.files[filename][1] / 1024))
-##			
-##			self.transport.write('HASH %s %s\n' % (filename, self.factory.files[filename][2]))
-##			self.setRawMode()
-##			
-##			for bytes in read_bytes_from_file(os.path.join(self.factory.files_path, filename)):
-##				self.transport.write(bytes)
-##			
-##			self.transport.write('\r\n')	
-##			self.setLineMode()
+
 		elif command == 'put':
 			try:
 				filename = data[1]
-				file_hash = None
+				file_hash = data[2]
 			except IndexError:
 				self.transport.write('Missing filename or file MD5 hash\n')
-##				self.transport.write('ENDMSG\n')
 				return
 
 			self.file_data = (filename, file_hash)
@@ -106,8 +75,7 @@ class FileTransferProtocol(basic.LineReceiver):
 			
 			for key, value in COMMANDS.iteritems():
 				self.transport.write('%s - %s\n' % (value[0], value[1]))
-			
-##			self.transport.write('ENDMSG\n')				
+							
 		elif command == 'quit':
 			self.transport.loseConnection()
 			
@@ -130,20 +98,15 @@ class FileTransferProtocol(basic.LineReceiver):
 			self.file_handler = None
 			self.transport.loseConnection()
 			
-##			if validate_file_md5_hash(file_path, self.file_data[1]):
-##				self.transport.write('File was successfully transfered and saved\n')
-##				self.transport.write('ENDMSG\n')
-##				
-##				display_message('File %s has been successfully transfered' % (filename))
-##			else:
-##				os.unlink(file_path)
-##				self.transport.write('File was successfully transfered but not saved, due to invalid MD5 hash\n')
-##				self.transport.write('ENDMSG\n')
-##			
-##				display_message('File %s has been successfully transfered, but deleted due to invalid MD5 hash' % (filename))
+			if validate_file_md5_hash(file_path, self.file_data[1]):
+				self.transport.write('put-ok\n')
+				display_message('File %s has been successfully transfered' % (filename))
+			else:
+				os.unlink(file_path)
+				self.transport.write('put-fail\n')
+				display_message('File %s has been successfully transfered, but deleted due to invalid MD5 hash' % (filename))
 		else:
 			self.file_handler.write(data)
-##			self.transport.write('.\n')
 		
 	def _send_list_of_files(self):
 		files = self._get_file_list()
@@ -153,7 +116,6 @@ class FileTransferProtocol(basic.LineReceiver):
 		for key, value in files.iteritems():
 			self.transport.write('- %s (%d.2 KB)\n' % (key, (value[1] / 1024.0)))
 			
-##		self.transport.write('ENDMSG\n')
 			
 	def _get_file_list(self):
 		""" Returns a list of the files in the specified directory as a dictionary:

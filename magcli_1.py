@@ -2,7 +2,7 @@ from twisted.internet import reactor, protocol
 from twisted.protocols import basic
 import os
 import optparse
-from common import read_bytes_from_file
+from common import read_bytes_from_file, get_file_md5_hash
 
 
 # a client protocol
@@ -13,6 +13,7 @@ class MagClient(basic.LineReceiver):
     def connectionMade(self):
 ##        self.transport.write("hello, world!")
         print "trying to connect..."
+        self.isTransferOK = False
 ##        command="hello"
 ##        self.transport.write('%s\n' % (command))
 ##        self.setLineMode()
@@ -53,7 +54,7 @@ class MagClient(basic.LineReceiver):
             
             print 'Uploading file: %s (%d KB)' % (filename, file_size)
             
-            self.transport.write('PUT %s %s\n' % (os.path.basename(filename), file_path))
+            self.transport.write('PUT %s %s\n' % (os.path.basename(filename), get_file_md5_hash(file_path)))
             self.setRawMode()
             
             for bytes in read_bytes_from_file(file_path):
@@ -63,6 +64,12 @@ class MagClient(basic.LineReceiver):
             
             # When the transfer is finished, we go back to the line mode 
             self.setLineMode()
+        elif data.endswith('put-ok'):
+            print "successfully transfered..."
+            self.isTransferOK = True
+        elif data.endswith('put-fail'):
+            print "File transfer is fail..."
+            
 ##        else:
 ##            self.transport.write('%s %s\n' % (command, data[1]))
 
@@ -75,7 +82,10 @@ class MagClient(basic.LineReceiver):
         #self.transport.loseConnection()
         
     def connectionLost(self, reason):
-        print "connection lost"
+        if self.isTransferOK:
+            print "good bye"
+        else:
+            print "connection lost"
 
     def _cleanAndSplitInput(self, input):
 	input = input.strip()
