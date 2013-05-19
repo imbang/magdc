@@ -6,7 +6,7 @@ from twisted.protocols import basic
 
 from common import COMMANDS, display_message, validate_file_md5_hash, get_file_md5_hash, read_bytes_from_file, clean_and_split_input
 
-class FileTransferProtocol(basic.LineReceiver):
+class MagSrvProtocol(basic.LineReceiver):
 	delimiter = '\n'
 
 	def getAuth(self):
@@ -143,9 +143,9 @@ class FileTransferProtocol(basic.LineReceiver):
 		
 		return input
 
-class FileTransferServerFactory(protocol.ServerFactory):
+class MagSrvFactory(protocol.ServerFactory):
 	
-	protocol = FileTransferProtocol
+	protocol = MagSrvProtocol
 	
 	def __init__(self, files_path):
 		self.files_path = files_path
@@ -161,5 +161,5 @@ if __name__ == '__main__':
 	
 	display_message('Listening on port %d, serving files from directory: %s' % (options.port, options.path))
 
-	reactor.listenTCP(options.port, FileTransferServerFactory(options.path))
+	reactor.listenTCP(options.port, MagSrvFactory(options.path))
 	reactor.run()
